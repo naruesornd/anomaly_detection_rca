@@ -28,7 +28,7 @@ class LSTM_Dropout_Net(nn.Module):
 
 # ===================== 2. DFS 工具函数 (适配LSTM) ===================== #
 def fine_feature_selection(dp, top_k_features, target_columns, test_size=0.2, random_state=42, dropout_threshold=0.05):
-    feature_num = top_k_features.shape[0]
+    feature_num = len(top_k_features)
     scaler_x, scaler_y = StandardScaler(), StandardScaler()
     X = scaler_x.fit_transform(dp.df[top_k_features])
     y = scaler_y.fit_transform(dp.df[target_columns])

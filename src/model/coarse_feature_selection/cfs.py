@@ -13,6 +13,8 @@ from data_processor import DataProcessor
 
 def random_forest_regressor(dp: DataProcessor, target_colums, features, test_size=0.2, random_state=42, top_num = 5):
     # 1. 数据拆分
+    features = [f for f in features if f not in ['cycle_id', 'cycle_time']]
+
     X_train, X_test, y_train, y_test = train_test_split(
         dp.df[features], dp.df[target_colums], test_size=test_size, random_state=random_state
     )
@@ -41,4 +43,8 @@ def random_forest_regressor(dp: DataProcessor, target_colums, features, test_siz
 
     shap.summary_plot(shap_values, X_sub_sample, feature_names=X_sub.columns, max_display=top_num*2)
 
+    import_features = pd.DataFrame(top_k_features)
+    import_data = dp.df[top_k_features]
+    import_data.to_csv("../data/temp_data/top_k_features_data.csv")
+    import_features.to_csv("../data/temp_data/top_k_features.csv")
     return top_k_features
