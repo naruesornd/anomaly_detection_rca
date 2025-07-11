@@ -13,7 +13,7 @@ from data_processor import DataProcessor
 
 def random_forest_regressor(dp: DataProcessor, target_colums, features, test_size=0.2, random_state=42, top_num = 5):
     # 1. 数据拆分
-    features = [f for f in features if f not in ['cycle_id', 'cycle_time']]
+    # features = [f for f in features if f not in ['cycle_id', 'cycle_time']]
 
     X_train, X_test, y_train, y_test = train_test_split(
         dp.df[features], dp.df[target_colums], test_size=test_size, random_state=random_state

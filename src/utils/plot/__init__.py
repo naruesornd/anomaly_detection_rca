@@ -1,2 +1,3 @@
 from .plot_by_time_period import PlotByTimePeriod
 from .plot_by_cycle import plot_by_cycle,interactive_cycle_plot
+from .fs_plot_test import plot_predictions_by_cycle
