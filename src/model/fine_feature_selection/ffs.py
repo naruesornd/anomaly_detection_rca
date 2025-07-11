@@ -34,6 +34,7 @@ def fine_feature_selection(dp, top_k_features, target_columns, test_size=0.2, ra
         df_dropna = dp.df[top_k_features + target_columns + ["cycle_id", "cycle_time"]]
 
     feature_num = len(top_k_features)
+    df_dropna = df_dropna[0:10000]
     # 先提取原始数据（未标准化的）
     X_raw = df_dropna[top_k_features].values
     y_raw = df_dropna[target_columns].values
@@ -83,6 +84,7 @@ def fine_feature_selection(dp, top_k_features, target_columns, test_size=0.2, ra
     # 过滤贡献小于阈值的特征
     selected_features = [f for f, d in drop_results.items() if d > dropout_threshold]
     print(f"\n最终选定特征数: {len(selected_features)}")
+
     return selected_features
 
 def evaluate_model(model, dataloader, criterion, device):

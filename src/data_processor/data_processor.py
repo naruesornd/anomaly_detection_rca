@@ -79,6 +79,89 @@ class DataProcessor:
         self.df['timestamp'] = pd.to_datetime(self.df['timestamp'], errors='coerce')
         self.columns = self.df.columns.tolist()  # 更新列名缓存
 
+    def rename_column_to_feedflow(self, original_column_name):
+        """
+        将指定列名重命名为 'FeedFlow'
+        """
+        if original_column_name not in self.df.columns:
+            raise ValueError(f"列 '{original_column_name}' 不在 DataFrame 中")
+        self.df = self.df.rename(columns={original_column_name: 'FeedFlow'})
+        self.columns = self.df.columns.tolist()  # 更新列名缓存
+    
+    def rename_column_to_feedpressure(self, original_column_name):
+        """
+        将指定列名重命名为 'FeedPressure'
+        """
+        if original_column_name not in self.df.columns:
+            raise ValueError(f"列 '{original_column_name}' 不在 DataFrame 中")
+        self.df = self.df.rename(columns={original_column_name: 'FeedPressure'})
+        self.columns = self.df.columns.tolist()  # 更新列名缓存
+    
+    def rename_column_to_feedconductivity	(self, original_column_name):
+        """
+        将指定列名重命名为 'FeedConductivity'
+        """
+        if original_column_name not in self.df.columns:
+            raise ValueError(f"列 '{original_column_name}' 不在 DataFrame 中")
+        self.df = self.df.rename(columns={original_column_name: 'FeedConductivity'})
+        self.columns = self.df.columns.tolist()  # 更新列名缓存
+    
+    
+    def rename_column_to_feedtemperature(self, original_column_name):
+        """
+        将指定列名重命名为 'FeedTemperature'
+        """
+        if original_column_name not in self.df.columns:
+            raise ValueError(f"列 '{original_column_name}' 不在 DataFrame 中")
+        self.df = self.df.rename(columns={original_column_name: 'FeedTemperature'})
+        self.columns = self.df.columns.tolist()  # 更新列名缓存
+
+    def rename_column_to_differentialpressure(self, original_column_name):
+        """
+        将指定列名重命名为 'DifferentialPressure'
+        """
+        if original_column_name not in self.df.columns:
+            raise ValueError(f"列 '{original_column_name}' 不在 DataFrame 中")
+        self.df = self.df.rename(columns={original_column_name: 'DifferentialPressure'})
+        self.columns = self.df.columns.tolist()  # 更新列名缓存
+    
+    def rename_column_to_permeateflow(self, original_column_name):
+        """
+        将指定列名重命名为 'PermeateFlow'
+        """
+        if original_column_name not in self.df.columns:
+            raise ValueError(f"列 '{original_column_name}' 不在 DataFrame 中")
+        self.df = self.df.rename(columns={original_column_name: 'PermeateFlow'})
+        self.columns = self.df.columns.tolist()  # 更新列名缓存
+    
+    def rename_column_to_permeatepressure(self, original_column_name):
+        """
+        将指定列名重命名为 'PermeatePressure'
+        """
+        if original_column_name not in self.df.columns:
+            raise ValueError(f"列 '{original_column_name}' 不在 DataFrame 中")
+        self.df = self.df.rename(columns={original_column_name: 'PermeatePressure'})
+        self.columns = self.df.columns.tolist()  # 更新列名缓存
+    
+    def rename_column_to_permeateconductivity(self, original_column_name):
+        """
+        将指定列名重命名为 'PermeateConductivity'
+        """
+        if original_column_name not in self.df.columns:
+            raise ValueError(f"列 '{original_column_name}' 不在 DataFrame 中")
+        self.df = self.df.rename(columns={original_column_name: 'PermeateConductivityy'})
+        self.columns = self.df.columns.tolist()  # 更新列名缓存
+
+    def rename_column_to_concentrateflow(self, original_column_name):
+        """
+            将指定列名重命名为 'ConcentrateFlow'
+        """
+        if original_column_name not in self.df.columns:
+            raise ValueError(f"列 '{original_column_name}' 不在 DataFrame 中")
+        self.df = self.df.rename(columns={original_column_name: 'ConcentrateFlow'})
+        self.columns = self.df.columns.tolist()  # 更新列名缓存
+
+
     def export_to_csv(self, output_path):
         if self.df is not None:
             self.df.to_csv(output_path, index=False)

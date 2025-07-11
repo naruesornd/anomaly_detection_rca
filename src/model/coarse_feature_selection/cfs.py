@@ -11,12 +11,13 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from data_processor import DataProcessor
 
-def random_forest_regressor(dp: DataProcessor, target_colums, features, test_size=0.2, random_state=42, top_num = 5):
+def random_forest_regressor(dp: DataProcessor, target_colums, features, plant_name,test_size=0.2, random_state=42, top_num = 5):
     # 1. 数据拆分
-    # features = [f for f in features if f not in ['cycle_id', 'cycle_time']]
-
+    features = [f for f in features if f not in ['cycle_id', 'cycle_time']]
+    # 选出前10000个数据
+    selected_data = dp.df[0:10000]
     X_train, X_test, y_train, y_test = train_test_split(
-        dp.df[features], dp.df[target_colums], test_size=test_size, random_state=random_state
+       selected_data[features], selected_data[target_colums], test_size=test_size, random_state=random_state
     )
 
     # 2. 训练随机森林
@@ -45,6 +46,6 @@ def random_forest_regressor(dp: DataProcessor, target_colums, features, test_siz
 
     import_features = pd.DataFrame(top_k_features)
     import_data = dp.df[top_k_features]
-    import_data.to_csv("../data/temp_data/top_k_features_data.csv")
-    import_features.to_csv("../data/temp_data/top_k_features.csv")
+    import_data.to_csv(f"../data/temp_data/top_k_features_data_{plant_name}.csv")
+    import_features.to_csv(f"../data/temp_data/top_k_features_{plant_name}.csv")
     return top_k_features
