@@ -1,2 +1,3 @@
 from .data_loader import time_series_loader,test_time_series_loader
 from .data_set import TimeSeriesDataset,TestTimeSeriesDataset
+from .industrialstreamloader import IndustrialStreamLoader

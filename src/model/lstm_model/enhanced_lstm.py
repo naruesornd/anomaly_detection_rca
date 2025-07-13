@@ -13,6 +13,7 @@ from tqdm import tqdm
 import ipywidgets as widgets
 from IPython.display import display
 from data_loader import time_series_loader,test_time_series_loader
+import joblib  # 或使用 pickle
 # 增强的LSTM模型
 class EnhancedLSTM(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, num_layers=2):
@@ -90,7 +91,7 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, device, n
             break
     return model
 
-def lstm_model(dp, selected_features, target_col, test_size=0.2, random_state=42,  num_epochs=100, patience=5):
+def lstm_model(dp, selected_features, target_col, feature_name,test_size=0.2, random_state=42,  num_epochs=100, patience=5):
     
     if dp.df[selected_features + target_col ].isnull().sum().sum() > 0:
         df_dropna = dp.df[selected_features + target_col ].dropna()
@@ -108,12 +109,16 @@ def lstm_model(dp, selected_features, target_col, test_size=0.2, random_state=42
     train_data_export = pd.DataFrame(np.concatenate([X_train, y_train.reshape(-1, 1)], axis=1), columns=selected_features + [target_col])
     val_data_export = pd.DataFrame(np.concatenate([X_val, y_val.reshape(-1, 1)], axis=1), columns=selected_features + [target_col])
     test_data_export = pd.DataFrame(np.concatenate([X_test_raw, y_test_raw.reshape(-1, 1)], axis=1), columns=selected_features + [target_col])
-    train_data_export.to_csv('../data/model_data/train_data_export.csv', index=False)
-    val_data_export.to_csv('../data/model_data/val_data_export.csv', index=False)
-    test_data_export.to_csv('../data/model_data/test_data_export.csv', index=False)
+    train_data_export.to_csv(f'../data/model_data/train_data_export_{feature_name}.csv', index=False)
+    val_data_export.to_csv(f'../data/model_data/val_data_export_{feature_name}.csv', index=False)
+    test_data_export.to_csv(f'../data/model_data/test_data_export_{feature_name}.csv', index=False)
 
     scaler_x = StandardScaler()
     X_train = scaler_x.fit_transform(X_train_raw)
+    scaler_x_path = f'../data/model_data/scaler_x_{feature_name}.pkl'
+    scaler_x_export = StandardScaler().fit(X_train_raw)
+    joblib.dump(scaler_x_export, scaler_x_path)  # 或者用 pickle.dump()
+    print(f"Scaler已保存到: {scaler_x_path}")
     X_test = scaler_x.transform(X_test_raw)
     X_val = scaler_x.transform(X_val)
 
@@ -121,6 +126,10 @@ def lstm_model(dp, selected_features, target_col, test_size=0.2, random_state=42
     y_train = scaler_y.fit_transform(y_train_raw)
     y_test = scaler_y.transform(y_test_raw)
     y_val = scaler_y.transform(y_val)
+    scaler_y_path = f'../data/model_data/scaler_y_{feature_name}.pkl'
+    scaler_y_export = StandardScaler().fit(y_train_raw)
+    joblib.dump(scaler_y_export, scaler_y_path)  # 或者用 pickle.dump()
+    print(f"Scaler已保存到: {scaler_y_path}")
 
     
     train_loader = time_series_loader(X_train, y_train, seq_len=12, batch_size=64, shuffle=False)
@@ -132,11 +141,11 @@ def lstm_model(dp, selected_features, target_col, test_size=0.2, random_state=42
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
     criterion = nn.HuberLoss()  # 对异常值更鲁棒
     train_model(model, train_loader, val_loader, optimizer, criterion, device, num_epochs=num_epochs, patience=patience)
-    model_weights_path = "../model/model_weights.pth"
+    model_weights_path = f"../model/model_weights_{feature_name}.pth"
     torch.save(model.state_dict(), model_weights_path)
-    model_analysis(test_loader, model_weights_path, scaler_x, scaler_y, target_col, device)
+    model_analysis(test_loader, model_weights_path, scaler_x, scaler_y, target_col, device, feature_name)
 
-def model_analysis(test_loader, model_weights_path, scaler_x, scaler_y, target_col, device):
+def model_analysis(test_loader, model_weights_path, scaler_x, scaler_y, target_col, device, feature_name):
     model = EnhancedLSTM(input_dim=test_loader.dataset.X.shape[1], hidden_dim=128, output_dim=1, num_layers=2).to(device)
     model.load_state_dict(torch.load(model_weights_path))
     model.eval()
@@ -186,7 +195,7 @@ def model_analysis(test_loader, model_weights_path, scaler_x, scaler_y, target_c
                 edgecolors='red', label='Large Errors', zorder=3)
     
     plt.tight_layout()
-    plt.savefig('../img/true_vs_predicted.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'../img/true_vs_predicted_plant1_{feature_name}.png', dpi=300, bbox_inches='tight')
     plt.show()
 
 

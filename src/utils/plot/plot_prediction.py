@@ -31,24 +31,28 @@ def plot_prediction(
         save_path: 图片保存路径
     """
     # 检查并处理 NaN 值
-    if isinstance(X, (pd.DataFrame, pd.Series)):
-        if X.isnull().sum().sum() > 0:
-            print(f"警告: 输入数据包含 {X.isnull().sum().sum()} 个 NaN 值，已自动删除")
-            X = X.dropna()
-            y = y[X.index]  # 保持 X 和 y 的索引一致
-    elif isinstance(X, np.ndarray):
-        if np.isnan(X).any():
+    if isinstance(X, (np.ndarray, torch.Tensor)):
+        # 统一转换为 numpy 数组进行检查
+        X_np = X.numpy() if isinstance(X, torch.Tensor) else X
+        if np.isnan(X_np).any():
             print("警告: 输入数据包含 NaN 值，请先处理")
             raise ValueError("输入数据包含 NaN 值")
+    else:
+        raise TypeError("输入数据类型必须是 numpy.ndarray 或 torch.Tensor")
 
-    # 转换为Tensor
+    if isinstance(y, (np.ndarray, torch.Tensor)):
+        y_np = y.numpy() if isinstance(y, torch.Tensor) else y
+        if np.isnan(y_np).any():
+            print("警告: 标签数据包含 NaN 值，请先处理")
+            raise ValueError("标签数据包含 NaN 值")
+    else:
+        raise TypeError("标签数据类型必须是 numpy.ndarray 或 torch.Tensor")
+
+    # 转换为 Tensor（如果还不是 Tensor）
     if not isinstance(X, torch.Tensor):
-        X = torch.tensor(X.values if hasattr(X, 'values') else np.array(X), 
-                        dtype=torch.float32)
+        X = torch.tensor(X, dtype=torch.float32)
     if not isinstance(y, torch.Tensor):
-        y = torch.tensor(y.values if hasattr(y, 'values') else np.array(y),
-                        dtype=torch.float32)
-    
+        y = torch.tensor(y, dtype=torch.float32)
     # 检查数据量是否足够
     total_samples = X.shape[0]
     if start_idx + n_points > total_samples:
@@ -94,35 +98,67 @@ def plot_prediction(
     print(f"RMSE: {rmse:.4f}")
     print(f"R²: {r2:.4f}")
     
-    # 创建对比图
-    plt.figure(figsize=(10, 6))
-    plt.scatter(y_true, y_pred, alpha=0.6, label='预测值 vs 真实值')
+    # 创建画布
+    plt.figure(figsize=(20, 8))
+    
+    # ================= 左图：散点对比图 =================
+    plt.subplot(1, 2, 1)
+    
+    # 绘制散点图
+    scatter = plt.scatter(y_true, y_pred, alpha=0.6, 
+                         c=np.abs(y_true - y_pred),  # 颜色表示误差大小
+                         cmap='viridis', 
+                         label='Predicted vs True')
+    
+    # 添加颜色条
+    cbar = plt.colorbar(scatter)
+    cbar.set_label('Absolute Error')
     
     # 绘制理想对角线
     max_val = max(y_true.max(), y_pred.max())
     min_val = min(y_true.min(), y_pred.min())
-    plt.plot([min_val, max_val], [min_val, max_val], 'r--', label='理想预测线')
+    plt.plot([min_val, max_val], [min_val, max_val], 'r--', label='Ideal Prediction')
     
-    plt.xlabel('true value')
-    plt.ylabel('predicted value')
-    plt.title(f'Model Prediction Comparison (Index {start_idx}-{start_idx + n_points})')
-    plt.legend()
-    plt.grid(True)
+    # 美化设置
+    plt.xlabel('True Value', fontsize=12)
+    plt.ylabel('Predicted Value', fontsize=12)
+    plt.title(f'Scatter Comparison\n(Index {start_idx}-{start_idx + n_points})', fontsize=14)
+    plt.legend(fontsize=10)
+    plt.grid(True, alpha=0.3)
     
-    # 添加评估指标
-    textstr = '\n'.join((
-        f'MAE = {mae:.4f}',
-        f'MSE = {mse:.4f}',
-        f'RMSE = {rmse:.4f}',
-        f'R² = {r2:.4f}'))
-    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-    plt.gca().text(0.05, 0.95, textstr, transform=plt.gca().transAxes,
-                  fontsize=10, verticalalignment='top', bbox=props)
+    # ================= 右图：曲线对比图 =================
+    plt.subplot(1, 2, 2)
+    
+    # 绘制前200个样本（可根据需要调整）
+    plot_samples = min(400, len(y_true))
+    x_axis = np.arange(plot_samples)
+    
+    # 绘制曲线
+    plt.plot(x_axis, y_true[:plot_samples], 'b-', label='True Values', 
+             alpha=0.7, linewidth=1.5)
+    plt.plot(x_axis, y_pred[:plot_samples], 'r--', label='Predictions', 
+             alpha=0.8, linewidth=1.2)
+    
+    # 标记异常点
+    diff = np.abs(y_true[:plot_samples] - y_pred[:plot_samples])
+    threshold = np.mean(diff) + 2 * np.std(diff)
+    anomalies = np.where(diff > threshold)[0]
+    plt.scatter(anomalies, y_true[anomalies], c='yellow', s=50,
+                edgecolors='red', label='Large Errors (>2σ)', zorder=3)
+    
+    # 美化设置
+    plt.xlabel('Time Steps', fontsize=12)
+    plt.ylabel('Target Value', fontsize=12)
+    plt.legend(fontsize=10, loc='upper right')
+    plt.grid(True, linestyle='--', alpha=0.3)
+    
+    # 调整布局
+    plt.tight_layout()
     
     # 保存或显示
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        print(f"图片已保存至: {save_path}")
+        print(f"对比图已保存至: {save_path}")
     else:
         plt.show()
     

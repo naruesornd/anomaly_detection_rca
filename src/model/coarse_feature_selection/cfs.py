@@ -46,6 +46,6 @@ def random_forest_regressor(dp: DataProcessor, target_colums, features, plant_na
 
     import_features = pd.DataFrame(top_k_features)
     import_data = dp.df[top_k_features]
-    import_data.to_csv(f"../data/temp_data/top_k_features_data_{plant_name}.csv")
-    import_features.to_csv(f"../data/temp_data/top_k_features_{plant_name}.csv")
+    import_data.to_csv(f"../data/temp_data/top_k_features_data_{plant_name}_{target_colums}.csv")
+    import_features.to_csv(f"../data/temp_data/top_k_features_{plant_name}_{target_colums}.csv")
     return top_k_features

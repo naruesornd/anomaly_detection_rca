@@ -30,3 +30,4 @@ def iqr(df, features, factor=1.5,plot=True):
         plt.xticks(rotation=45)
         plt.title('Boxplot of Features After Outlier Removal')
         plt.show()
+
