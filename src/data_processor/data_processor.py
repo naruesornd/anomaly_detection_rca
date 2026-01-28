@@ -9,6 +9,8 @@ class DataProcessor:
         self.df = self.load_data()
         self.df = self.df.reset_index()
         self.columns = self.df.columns.tolist()
+        self.outputs_df = None # to store output features if needed
+
     """load data from file"""
     def load_data(self):
         if self.data_path.endswith('.csv'):
@@ -49,6 +51,44 @@ class DataProcessor:
             self.columns = self.df.columns.tolist()
         else:
             print('No data loaded')
+
+    def test(self):
+        print("This is a test method.")
+    
+    def drop_columns(self, drop_features=None):
+        if self.df is not None:
+            drop_features = list(drop_features)
+            # if empty, raise error
+            if drop_features is None:
+                raise ValueError("drop_features cannot be None")
+            missing_features = [c for c in drop_features if c not in self.columns]
+            # check if they exist
+            if missing_features:
+                raise ValueError(f"The following columns to drop are not in df: {missing_features}")
+            if drop_features:
+                self.df = self.df.drop(columns=drop_features)
+            self.columns = self.df.columns.tolist()
+        else:
+            print('No data loaded')
+        
+
+    def drop_outputs(self, drop_features=None):
+        if self.df is not None:
+            drop_features = list(drop_features)
+            # if empty, raise error
+            if drop_features is None:
+                raise ValueError("drop_features cannot be None")
+            # missing_features = [c for c in drop_features if c not in self.columns]
+            # # check if they exist
+            # if missing_features:
+            #     raise ValueError(f"The following columns to drop are not in df: {missing_features}")
+            if drop_features:
+                self.outputs_df = self.df[drop_features].copy()
+                self.df = self.df.drop(columns=drop_features)
+            self.columns = self.df.columns.tolist()
+        else:
+            print('No data loaded')
+
 
     def drop_NA_with_feature(self, features):
         if self.df is not None:
@@ -149,7 +189,7 @@ class DataProcessor:
         """
         if original_column_name not in self.df.columns:
             raise ValueError(f"列 '{original_column_name}' 不在 DataFrame 中")
-        self.df = self.df.rename(columns={original_column_name: 'PermeateConductivityy'})
+        self.df = self.df.rename(columns={original_column_name: 'PermeateConductivity'})
         self.columns = self.df.columns.tolist()  # 更新列名缓存
 
     def rename_column_to_concentrateflow(self, original_column_name):

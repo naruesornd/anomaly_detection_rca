@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import torch
 import torch.nn as nn
-
+from utils.plot.dynamic_plot import RealTimePlotter
 class IndustrialDataFlowSimulator:
-    def __init__(self, model, data_loader, device, feature_names, seq_length=12, 
-                 max_points=1000, output_path='../data/model_data/predictions.csv',
-                 anomaly_window=100, iqr_multiplier=1.5):
+    def __init__(self, model, data_loader, device, feature_names, target_name, seq_length=12, 
+                 max_points=300, output_path='../data/model_data/predictions.csv',
+                 anomaly_window=20, iqr_multiplier=1.5, x_scaler=None, y_scaler=None):
         """
         工业数据流模拟器初始化（增加特征分析功能）
         
@@ -28,13 +28,15 @@ class IndustrialDataFlowSimulator:
         self.data_loader = data_loader
         self.device = device
         self.feature_names = feature_names
+        self.target_name = target_name
         self.num_features = len(feature_names)
         self.seq_length = seq_length
         self.max_points = max_points
         self.output_path = output_path
         self.anomaly_window = anomaly_window
         self.iqr_multiplier = iqr_multiplier
-        
+        self.x_scaler = x_scaler  # 特征的Scaler
+        self.y_scaler = y_scaler  # 目标值的Scaler
         # 初始化数据结构
         self.window = deque(maxlen=seq_length)
         self.prediction_window = deque(maxlen=anomaly_window)
@@ -65,7 +67,14 @@ class IndustrialDataFlowSimulator:
     def prepare_sequence(self):
         """准备当前序列数据"""
         current_seq = np.array(self.window)[:, :-1]  # 排除最后一列目标值
-        return torch.FloatTensor(current_seq).unsqueeze(0).to(self.device)
+        seq_tensor = torch.FloatTensor(current_seq).unsqueeze(0).to(self.device)
+
+        # 如果传入了x_scaler，则对当前输入进行反标准化
+        if self.x_scaler:
+            seq_tensor = torch.FloatTensor(self.x_scaler.inverse_transform(current_seq)).unsqueeze(0).to(self.device)
+
+        return seq_tensor
+
 
     def make_prediction(self, seq_tensor):
         """使用模型进行预测"""
@@ -248,84 +257,49 @@ class IndustrialDataFlowSimulator:
         print(f"结果图表已保存至 {plot_path}")
         plt.close()
 
-    def run_simulation(self):
-        """执行完整的模拟流程"""
-        # 1. 初始化窗口
+    def run_simulation(self, show_plot=True):
         self.initialize_window()
-        
         print(f"开始实时预测(最多处理{self.max_points}个点)...")
-        
-        # 2. 主处理循环
+
+        plotter = RealTimePlotter(target_name=self.target_name,max_points=200) if show_plot else None
+
+
         while self.point_count < self.max_points:
             try:
-                # 准备序列并预测
                 seq_tensor = self.prepare_sequence()
                 prediction = self.make_prediction(seq_tensor)
-                
-                # 获取下一个真实值
+
                 next_data = next(self.data_loader)
-                actual_value = next_data[-1]
-                
-                # 检测异常
+                actual_value = next_data[-1]  # 实际目标值
+
+                # 如果传入了y_scaler，则对实际值和预测值进行反标准化
+                if self.y_scaler:
+                    actual_value = self.y_scaler.inverse_transform(actual_value.reshape(1, -1))[0][0]
+                    prediction = self.y_scaler.inverse_transform(np.array([[prediction]]))[0][0]
+
                 is_anomaly, current_bound = self.detect_anomaly(prediction)
-                
-                # 如果是异常点，分析特征贡献
+
                 if is_anomaly:
-                    # 分析特征贡献
                     contributions = self.analyze_feature_contributions(seq_tensor)
-                    
-                    # 找出贡献最大的特征
                     top_index = np.argmax(contributions)
                     top_feature = self.feature_names[top_index]
                     top_contribution = contributions[top_index]
-                    
-                    print(f"  主要贡献特征: {top_feature} (贡献度: {top_contribution:.4f})")
-                    
-                    # 保存特征分析结果
+                    print(f"⚠️ 异常点贡献分析: {top_feature} ({top_contribution:.4f})")
                     self.anomaly_contributions.append((self.point_count, top_feature, top_contribution))
-                
-                # 更新状态
+
                 self.update_state(prediction, actual_value, is_anomaly, current_bound)
-                
-                # 打印进度
+
+                if show_plot:
+                    plotter.update(self.point_count, actual_value, prediction, is_anomaly)
+
                 self.print_progress(prediction, actual_value)
-                
             except StopIteration:
                 print("数据流结束")
                 break
-        
-        # 3. 计算指标
-        metrics = self.calculate_metrics()
-        
-        print("\n===== 性能评估 =====")
-        print(f"MAE: {metrics['mae']:.4f}")
-        print(f"MSE: {metrics['mse']:.4f}")
-        print(f"RMSE: {metrics['rmse']:.4f}")
-        print(f"R²: {metrics['r2']:.4f}")
-        print(f"\n===== 异常检测统计 =====")
-        print(f"检测到异常点数量: {metrics['anomaly_count']}")
-        print(f"异常点比例: {metrics['anomaly_rate']:.2%}")
-        
-        # 打印特征贡献分析摘要
-        if self.anomaly_contributions:
-            print("\n===== 异常点特征贡献摘要 =====")
-            # 统计每个特征作为主要贡献者的次数
-            feature_counts = {}
-            for _, feature, _ in self.anomaly_contributions:
-                feature_counts[feature] = feature_counts.get(feature, 0) + 1
-            
-            # 按次数排序
-            sorted_features = sorted(feature_counts.items(), key=lambda x: x[1], reverse=True)
-            
-            print("特征在异常点中作为主要贡献者的次数:")
-            for feature, count in sorted_features:
-                percentage = count / len(self.anomaly_contributions) * 100
-                print(f"  {feature}: {count}次 ({percentage:.1f}%)")
-        
-        # 4. 保存结果
-        results = self.save_results()
-        
-        # 5. 绘制图表
-        self.plot_results(results)
-        
-        return results
+        if plotter is not None:
+            # 假设 update 被调用多次后再保存 gif
+            if plotter.frames:
+                gif_filename=f"../img/{self.target_name}_realtime_prediction.gif"
+                plotter.save_gif(gif_filename=gif_filename, fps=5)
+            else:
+                print("未生成任何帧，无法保存 GIF。请确认是否调用了 update()。")
