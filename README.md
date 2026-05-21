@@ -178,38 +178,6 @@ Membrane fouling develops over days (slow drift) while sensor faults appear with
 
 ---
 
-## Data Format
-
-The framework expects plant data in one of two formats:
-
-**Long format (SCADA/historian export):**
-```
-timestamp        | param_name      | value
-2023-01-01 00:00 | FeedFlow        | 285.3
-2023-01-01 00:00 | FeedPressure    | 12.4
-...
-```
-Use `dp.change_pivot('timestamp', 'param_name', 'value')` to convert.
-
-**Wide format:**
-```
-timestamp        | FeedFlow | FeedPressure | FeedTemperature | ...
-2023-01-01 00:00 | 285.3    | 12.4         | 24.1            | ...
-```
-Load directly without pivoting.
-
----
-
-## Citation
-
-If you use this framework in your research, please cite:
-
-```
-[Citation to be added upon publication]
-```
-
----
-
 ## License
 
 For academic use only. ECE498 Group Project — Zhejiang University International Campus.
