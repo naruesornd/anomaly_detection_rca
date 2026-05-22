@@ -94,19 +94,6 @@ Dataset from Plant
 
 ---
 
-## Monitored Targets
-
-| Variable | Physics Model Used |
-|---|---|
-| Differential Pressure | Viscosity-corrected friction model: `dP = k × exp(-0.024(T-25)) × Q^β` |
-| Permeate Flow | Solution-Diffusion: `Q = A × TCF × NDP` |
-| Permeate Conductivity | Salt diffusion: `C_perm = (B × C_feed × TCF) / Q` |
-| Permeate Pressure | Linear regression on permeate flow (hydraulic) |
-
-All physics model parameters (A, B, k) are auto-calibrated from the first 500 rows of clean baseline data — no labeled anomaly data is required.
-
----
-
 ## Installation
 
 ```bash
