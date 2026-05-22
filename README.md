@@ -45,11 +45,11 @@ RO/
 │       └── simulate/               # Plant simulation utilities
 ├── notebook/
 │   ├── 01_exploration.ipynb         # Data EDA and cycle analysis
-│   ├── 02_framework.ipynb           # Full pipeline execution
-│   └── 03_results.ipynb             # Results, evaluation, paper figures
-├── data/
-│   ├── raw/                         # Raw plant Excel/CSV files
-│   └── physics/                     # Saved feature selection outputs
+│   ├── 02_SADS.ipynb                # SADS results
+│   └── 03_FADS.ipynb                # FADS results
+├── results/                         
+│   ├── AD-RCA/                      # results of AD-FADS
+│   ├── dataset/                     # datasets
 ├── requirements.txt
 └── README.md
 ```
