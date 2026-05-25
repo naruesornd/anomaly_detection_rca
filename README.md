@@ -1,6 +1,6 @@
-# Hybrid Physics-ML Anomaly Detection for Reverse Osmosis Systems
+# ECE498GRP 
 
-A generic framework for multivariate anomaly detection and root cause analysis in industrial process plants, combining physics-based modelling with deep learning. Developed as part of ECE498 Group Project at Zhejiang University International Campus.
+A generic framework for multivariate anomaly detection and root cause analysis in industrial process plants, combining physics-based modelling with deep learning (SADS) and derivative-based model (FADS). Developed as part of ECE498GRP at Zhejiang University International Campus.
 
 ---
 
@@ -186,14 +186,6 @@ timestamp        | FeedFlow | FeedPressure | FeedTemperature | ...
 Load directly without pivoting.
 
 ---
-
-## Citation
-
-If you use this framework in your research, please cite:
-
-```
-[Citation to be added upon publication]
-```
 
 ---
 
